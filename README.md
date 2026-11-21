@@ -53,5 +53,6 @@ sh ../scripts/check-no-google-auth.sh app/build.gradle app/build/outputs/apk/deb
 
 ## 授權
 
-- `youtubedl-android`、ffmpeg 是 GPL-3.0;本 App 的原始碼即本 repo,公開提供。
+- 本 repo 以 **GPL-3.0** 授權,全文見 [LICENSE](LICENSE)。
+- 使用的 `youtubedl-android`、ffmpeg 也是 GPL-3.0;APK 的完整原始碼即本 repo,公開提供。
 - 下載核心(yt-dlp 參數、youtubedl-android 版本)的修正要同步到 EasyYTDL 與 Windows 版(YT2MP3-Lite)。
