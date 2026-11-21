@@ -5,10 +5,55 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * 輸入依 yt-dlp `--flat-playlist -J` 的欄位撰寫(design 風險:未以實機輸出確認);
- * 實機跑過後換成真實輸出存成的測試檔。
+ * 前半是手寫的邊界情形;「實機輸出」開頭的測試讀 test/resources/flatlist/ 的真實輸出
+ * (2026-11-22 測試機上 youtubedl-android 內建 yt-dlp 更新到 2026.10.26 後跑出,Lister 的 debug 傾印取回)。
  */
 class FlatListTest {
+    private fun real(name: String): String =
+        javaClass.classLoader!!.getResourceAsStream("flatlist/$name.json")!!.readBytes().toString(Charsets.UTF_8)
+
+    @Test
+    fun `實機輸出 搜尋 20 筆,略過 3 支直播中的`() {
+        val page = FlatList.parse(real("search"))!!
+        assertEquals("lofi jazz piano", page.title)
+        assertEquals(17, page.videos.size)
+        assertEquals(Video(page.videos[0].id, page.videos[0].title, 12923), page.videos[0])
+        assertEquals("MYPVQccHhAQ", page.videos[0].id)
+        for (live in listOf("Dx5qFachd3A", "N0snMcR6aaA", "O8q9nnyK6Xw")) {
+            assertEquals(false, page.videos.any { it.id == live })
+        }
+    }
+
+    @Test
+    fun `實機輸出 頻道 30 支,都有長度`() {
+        val page = FlatList.parse(real("channel"))!!
+        assertEquals("YouTube - Videos", page.title)
+        assertEquals(30, page.videos.size)
+        assertEquals("dD33lDxL9K0", page.videos.first().id)
+        assertEquals(441L, page.videos.first().durationSeconds)
+        assertEquals("OzjerLmZt8Q", page.videos.last().id)
+        assertEquals(true, page.videos.all { it.durationSeconds != null })
+    }
+
+    @Test
+    fun `實機輸出 播放清單 15 支,Shorts 沒有長度`() {
+        val page = FlatList.parse(real("playlist"))!!
+        assertEquals("Making it count", page.title)
+        assertEquals(15, page.videos.size)
+        assertEquals("46oqYboBCb0", page.videos.first().id)
+        assertEquals("Fp-usx4DWHw", page.videos.last().id)
+        assertEquals(true, page.videos.all { it.durationSeconds == null })
+    }
+
+    @Test
+    fun `直播中與尚未開播的略過,已結束的直播照收`() {
+        val json = """{"title":"t","entries":[
+            {"id":"aaaaaaaaaaa","title":"直播中","live_status":"is_live"},
+            {"id":"bbbbbbbbbbb","title":"預告","live_status":"is_upcoming"},
+            {"id":"ccccccccccc","title":"重播","live_status":"was_live","duration":3600},
+            {"id":"ddddddddddd","title":"一般","live_status":null,"duration":60}]}"""
+        assertEquals(listOf("ccccccccccc", "ddddddddddd"), FlatList.parse(json)!!.videos.map { it.id })
+    }
     @Test
     fun `頻道清單`() {
         val json = """

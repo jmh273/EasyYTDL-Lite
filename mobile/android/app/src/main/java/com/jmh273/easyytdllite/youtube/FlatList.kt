@@ -7,11 +7,12 @@ data class ListPage(val title: String, val videos: List<Video>)
 
 /** 解析 `yt-dlp --flat-playlist -J` 的輸出(split-lite-and-list-sources design D2)。純邏輯。 */
 object FlatList {
+    private val NOT_DOWNLOADABLE = setOf("is_live", "is_upcoming")
     private val VIDEO_ID = Regex("""^[A-Za-z0-9_-]{11}$""")
 
     /**
      * [stdout] 整段是 JSON 就用整段;前面有雜訊時取最後一行以 `{` 開頭的 JSON。都不是時回傳 null。
-     * 只收 id 是 11 字元的影片項目;頻道、子清單(搜尋結果裡會有)略過;重複的 id 只留第一個。
+     * 只收 id 是 11 字元的影片項目;頻道、子清單(搜尋結果裡會有)、直播中與尚未開播的略過;重複的 id 只留第一個。
      */
     fun parse(stdout: String?): ListPage? {
         if (stdout == null) return null
@@ -29,6 +30,8 @@ object FlatList {
                 if (!VIDEO_ID.matches(id)) continue
                 val ieKey = e.optString("ie_key")
                 if (ieKey.isNotEmpty() && ieKey != "Youtube") continue
+                // 直播中與尚未開播的下載不會結束(搜尋結果裡常見),不列出;已結束的直播(was_live)照收。
+                if (e.optString("live_status") in NOT_DOWNLOADABLE) continue
                 if (!seen.add(id)) continue
                 val title = e.optString("title").takeIf { it.isNotBlank() && it != "null" } ?: id
                 val duration = if (e.isNull("duration")) null else e.optDouble("duration").takeIf { !it.isNaN() }?.toLong()

@@ -28,6 +28,7 @@
 - [x] 4.1 `mobile/scripts/check-no-google-auth.sh`(建置設定 + APK dex)含自測對照組;CI 驗證 APK 後跑
 - [x] 4.2 `assembleDebug` 並以 `aapt2 dump badging` 讀 applicationId、版號、權限
 - [x] 4.3 README 改寫(條款聲明、安裝、相容性、與 EasyYTDL 共存);`KIT-DIFF.md` 加「複製時改的地方」
-- [ ] 4.4 實機驗收(搜尋、頻道、播放清單、分享清單、下載一支 MP3)——每批 adb 操作先問使用者
-- [ ] 4.5 實機跑一次 `--flat-playlist -J`(頻道、播放清單、搜尋各一),把真實輸出存成 FlatListTest 的測試檔
-- [ ] 4.6 使用者親手:`setup-signing.sh` 產生新簽章金鑰並設 GitHub secrets;建公開 repo、第一個 commit(作者信箱用 GitHub noreply)、push;推 `mobile-v0.1.0` tag(各步先確認)
+- [x] 4.4 實機驗收(搜尋、頻道、播放清單、分享清單、下載一支 MP3)——每批 adb 操作先問使用者
+- [x] 4.5 實機跑一次 `--flat-playlist -J`(頻道、播放清單、搜尋各一),把真實輸出存成 FlatListTest 的測試檔
+- [x] 4.7 實機發現搜尋結果含直播中的影片:FlatList 略過 `is_live`、`is_upcoming`;spec 加情境;JVM 測試以實機輸出驗證
+- [x] 4.6 使用者親手:`setup-signing.sh` 產生新簽章金鑰並設 GitHub secrets;建公開 repo、第一個 commit(作者信箱用 GitHub noreply)、push;推 `mobile-v0.1.0` tag(各步先確認)

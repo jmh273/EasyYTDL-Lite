@@ -1,6 +1,7 @@
 package com.jmh273.easyytdllite.service
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.jmh273.easyytdllite.queue.Failure
@@ -44,8 +45,21 @@ class Lister(context: Context) {
         } catch (e: InterruptedException) {
             return Result.Failed(Failure.OTHER)
         }
+        dumpForTests(source, response.out)
         val page = FlatList.parse(response.out) ?: return Result.Failed(FailureClassifier.classify(response.err, networkAvailable()))
         return Result.Ok(page)
+    }
+
+    /**
+     * 只在 debug 版:把 yt-dlp 原始輸出存到 cache/list-dump/,供實機取回當 FlatListTest 的測試資料(tasks 4.5)。
+     * 取回:adb shell run-as <套件名> cat cache/list-dump/<種類>.json
+     */
+    private fun dumpForTests(source: ListSource, out: String) {
+        if (app.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
+        runCatching {
+            val dir = java.io.File(app.cacheDir, "list-dump").apply { mkdirs() }
+            java.io.File(dir, source::class.simpleName.orEmpty().lowercase() + ".json").writeText(out)
+        }
     }
 
     private fun networkAvailable(): Boolean {
