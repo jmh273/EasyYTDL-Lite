@@ -42,6 +42,7 @@ import com.jmh273.easyytdllite.queue.QueueItem
 import com.jmh273.easyytdllite.service.DownloadService
 import com.jmh273.easyytdllite.service.QueueStore
 import com.jmh273.easyytdllite.service.UpdateChecker
+import com.jmh273.easyytdllite.service.UpdateInstaller
 import com.jmh273.easyytdllite.settings.SettingsStore
 import com.jmh273.easyytdllite.share.VideoUrl
 import com.jmh273.easyytdllite.youtube.ListSource
@@ -71,6 +72,8 @@ class MainActivity : ComponentActivity() {
         // 下載探測只在 debug 版的 manifest 裡(src/debug);release 版解析不到,就不顯示入口。
         val probe = Intent().setClassName(this, PROBE_ACTIVITY)
             .takeIf { packageManager.resolveActivity(it, 0) != null }
+        // App 內更新留下的 APK:已裝好的舊版與沒完成的下載刪掉(add-in-app-update design D2)。
+        UpdateInstaller.get(this).cleanup(versionName)
         handleIntent(intent)
         setContent {
             EasyYtdlTheme {

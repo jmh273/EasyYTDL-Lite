@@ -13,11 +13,39 @@ class UpdateCheckTest {
     private fun rel(v: String) = LatestRelease(Version.parse(v)!!, "https://github.com/jmh273/EasyYTDL-Lite/releases/tag/mobile-v$v")
 
     @Test
-    fun `實機回應 2026-11-22 的 releases latest`() {
+    fun `實機回應 2026-11-22 的 releases latest 含 APK`() {
         assertEquals(
-            LatestRelease(Version(0, 1, 1), "https://github.com/jmh273/EasyYTDL-Lite/releases/tag/mobile-v0.1.1"),
+            LatestRelease(
+                Version(0, 1, 1),
+                "https://github.com/jmh273/EasyYTDL-Lite/releases/tag/mobile-v0.1.1",
+                ApkAsset(
+                    "app-release-v0.1.1.apk",
+                    "https://github.com/jmh273/EasyYTDL-Lite/releases/download/mobile-v0.1.1/app-release-v0.1.1.apk",
+                    58606562,
+                    "5cbc8d8a0a7da1e9e213e2bcc78b6e16dc5427d31d8c958a391638baacd5ba63",
+                ),
+            ),
             UpdateCheck.parse(real()),
         )
+    }
+
+    @Test
+    fun `APK 不合格就沒有 App 內更新 但版本照讀`() {
+        val sha = "a".repeat(64)
+        val dl = "https://github.com/jmh273/EasyYTDL-Lite/releases/download/mobile-v1.2.3/"
+        fun j(name: String, url: String, size: Long, digest: String) =
+            """{"tag_name":"mobile-v1.2.3","html_url":"https://github.com/x","assets":[
+               {"name":"other.zip","browser_download_url":"${dl}other.zip","size":1,"digest":"sha256:$sha"},
+               {"name":"$name","browser_download_url":"$url","size":$size,"digest":"$digest"}]}"""
+        val ok = UpdateCheck.parse(j("app-release-v1.2.3.apk", dl + "app-release-v1.2.3.apk", 10, "sha256:$sha"))!!
+        assertEquals(ApkAsset("app-release-v1.2.3.apk", dl + "app-release-v1.2.3.apk", 10, sha), ok.apk)
+        assertNull(UpdateCheck.parse(j("app-release-v1.2.2.apk", dl + "app-release-v1.2.2.apk", 10, "sha256:$sha"))!!.apk)
+        assertNull(UpdateCheck.parse(j("app-release-v1.2.3.apk", "https://evil.example/app-release-v1.2.3.apk", 10, "sha256:$sha"))!!.apk)
+        assertNull(UpdateCheck.parse(j("app-release-v1.2.3.apk", "https://github.com/other/repo/releases/download/x/app-release-v1.2.3.apk", 10, "sha256:$sha"))!!.apk)
+        assertNull(UpdateCheck.parse(j("app-release-v1.2.3.apk", dl + "app-release-v1.2.3.apk", 0, "sha256:$sha"))!!.apk)
+        assertNull(UpdateCheck.parse(j("app-release-v1.2.3.apk", dl + "app-release-v1.2.3.apk", 10, "sha1:abc"))!!.apk)
+        assertNull(UpdateCheck.parse(j("app-release-v1.2.3.apk", dl + "app-release-v1.2.3.apk", 10, "sha256:xyz"))!!.apk)
+        assertNull(UpdateCheck.parse("""{"tag_name":"mobile-v1.2.3","html_url":"https://github.com/x"}""")!!.apk)
     }
 
     @Test

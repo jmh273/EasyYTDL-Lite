@@ -97,6 +97,11 @@
     <string name="update_available">有新版 %1$s</string>
     <string name="update_open">前往下載</string>
     <string name="update_skip">略過</string>
+    <string name="update_install">更新</string>
+    <string name="update_retry">重試</string>
+    <string name="update_downloading">下載新版中… %1$d%%</string>
+    <string name="update_need_permission">請允許「安裝不明應用程式」,回來再按一次「更新」。</string>
+    <string name="update_install_failed">更新失敗(下載中斷或檔案不符),可以重試,或前往下載頁手動安裝。</string>
     <string name="update_check">檢查新版</string>
     <string name="update_checking">檢查中…</string>
     <string name="update_up_to_date">已是最新版</string>

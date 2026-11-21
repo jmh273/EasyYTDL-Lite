@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <!-- 進度通知;Android 13 以上在第一次加入佇列時請求。 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- App 內更新:把下載的新版 APK 交給系統安裝程式(add-in-app-update;使用者 2026-11-22 決定)。 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- allowBackup=false:佇列與下載紀錄只在這支手機有意義,不讓系統備份帶到別台(沿用 EasyYTDL)。
          下載的 MP3 存在公用的 Music/,不受這個設定影響。
@@ -21,6 +23,17 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <!-- App 內更新:只開放 cacheDir/update/ 給系統安裝程式讀。 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.update"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/lite_update_paths" />
+        </provider>
 
         <activity
             android:name=".ui.MainActivity"

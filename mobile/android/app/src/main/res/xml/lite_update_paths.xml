@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App 內更新:只開放 cacheDir/update/ 給系統安裝程式讀(add-in-app-update design D3)。 -->
+<paths>
+    <cache-path name="update" path="update/" />
+</paths>

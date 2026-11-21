@@ -157,9 +157,12 @@ private fun UpdateCheckRow(versionName: String) {
         null -> {}
         ManualResult.UpToDate -> Text(stringResource(R.string.update_up_to_date), style = MaterialTheme.typography.bodyMedium)
         ManualResult.Failed -> Text(stringResource(R.string.update_failed), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-        is ManualResult.NewVersion -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.update_available, r.release.version.toString()), style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = { openReleasePage(context, r.release.url) }) { Text(stringResource(R.string.update_open)) }
+        is ManualResult.NewVersion -> Column {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.update_available, r.release.version.toString()), style = MaterialTheme.typography.bodyMedium)
+                UpdateButtons(r.release)
+            }
+            UpdateStatus(r.release)
         }
     }
 }

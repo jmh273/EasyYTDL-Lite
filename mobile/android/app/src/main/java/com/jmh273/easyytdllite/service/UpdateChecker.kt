@@ -59,12 +59,14 @@ class UpdateChecker private constructor(context: Context) {
             }
         }.getOrNull()
         val rel = UpdateCheck.parse(body) ?: return@withContext null
-        prefs.edit().putString(KEY_LATEST_VERSION, rel.version.toString()).putString(KEY_LATEST_URL, rel.url).apply()
+        // 存原始回應,重開時用同一套規則重新解析(含 APK 資訊);舊鍵留給 0.2.0 的存檔相容。
+        prefs.edit().putString(KEY_LATEST_JSON, body).putString(KEY_LATEST_VERSION, rel.version.toString()).putString(KEY_LATEST_URL, rel.url).apply()
         _latest.value = rel
         rel
     }
 
     private fun storedLatest(): LatestRelease? {
+        UpdateCheck.parse(prefs.getString(KEY_LATEST_JSON, null))?.let { return it }
         val v = Version.parse(prefs.getString(KEY_LATEST_VERSION, null)) ?: return null
         val url = prefs.getString(KEY_LATEST_URL, null)?.takeIf { it.startsWith("https://github.com/") } ?: return null
         return LatestRelease(v, url)
@@ -75,6 +77,7 @@ class UpdateChecker private constructor(context: Context) {
         private const val KEY_SKIPPED = "skipped_version"
         private const val KEY_LATEST_VERSION = "latest_version"
         private const val KEY_LATEST_URL = "latest_url"
+        private const val KEY_LATEST_JSON = "latest_json"
         private const val TIMEOUT_MS = 10_000
 
         @Volatile private var instance: UpdateChecker? = null
