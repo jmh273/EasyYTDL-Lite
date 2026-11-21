@@ -15,4 +15,4 @@
 - [x] 3.1 README 安裝步驟與 App 截圖
 - [x] 3.2 `VERSION_NAME` 0.2.0;`:app:testDebugUnitTest`、`assembleDebug`、`check-no-google-auth.sh`
 - [x] 3.3 實機驗收(每批 adb 先問):自動檢查提示(用改小的版號模擬舊版)、略過、手動檢查、授權對話框;release 全新安裝冒煙
-- [ ] 3.4 推 `mobile-v0.2.0` tag(先確認)
+- [x] 3.4 推 `mobile-v0.2.0` tag(先確認);CI 全綠,全新安裝 CI 簽章 APK 冒煙:分享 → 列出 → 加入 → MP3 完成、手動檢查「已是最新版」
