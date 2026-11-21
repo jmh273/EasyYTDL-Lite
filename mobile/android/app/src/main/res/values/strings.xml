@@ -2,7 +2,7 @@
 <resources>
     <!-- 命名規則:App 自己的字串 MUST 用專屬前綴(main_、nav_、settings_、tab_、queue_、list_、options_、format_、status_、failure_、ytdlp_、notif_、notice_)。
          函式庫也有通用名稱並附各語系翻譯;撞名時只會蓋掉預設語系,繁中手機會顯示函式庫的翻譯。 -->
-    <string name="app_name">EasyYTDL Lite</string>
+    <string name="app_name">YT下載Lite</string>
     <string name="main_version">版本 %1$s</string>
     <!-- 只在 debug 版顯示(release 版沒有下載探測畫面)。 -->
     <string name="main_open_probe">下載探測(測試用)</string>

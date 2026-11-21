@@ -1,0 +1,2 @@
+- [x] 1.1 名稱改為「YT下載Lite」/「YT下載Lite(測試)」;授權名單的本 App 名稱;README;版號 0.2.1
+- [x] 1.2 `:app:testDebugUnitTest`、`assembleDebug`;`aapt2 dump badging` 讀名稱

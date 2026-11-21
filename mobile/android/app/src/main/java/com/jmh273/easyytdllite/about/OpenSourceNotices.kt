@@ -6,7 +6,7 @@ data class Notice(val name: String, val license: String, val url: String, val gr
 /** 「開放原始碼授權」的名單(spec app-settings;add-update-check-and-notices design D5)。 */
 object OpenSourceNotices {
     const val SOURCE_URL = "https://github.com/jmh273/EasyYTDL-Lite"
-    val APP = Notice("EasyYTDL Lite", "GPL-3.0", SOURCE_URL)
+    val APP = Notice("YT下載Lite", "GPL-3.0", SOURCE_URL)
     val ENTRIES: List<Notice> = listOf(
         Notice("youtubedl-android", "GPL-3.0", "https://github.com/JunkFood02/youtubedl-android", listOf("io.github.junkfood02.youtubedl-android")),
         Notice("yt-dlp", "Unlicense", "https://github.com/yt-dlp/yt-dlp"),

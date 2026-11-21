@@ -113,7 +113,7 @@ android {
             // 那與「功能沒做出來」完全同形。
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-            resValue "string", "app_name", "EasyYTDL Lite(測試)"
+            resValue "string", "app_name", "YT下載Lite(測試)"
         }
         release {
             // R8(enable-r8-shrink):dex 25.4 → 約 11 MB。keep 規則見 proguard-rules.pro。

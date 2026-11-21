@@ -1,5 +1,7 @@
 # EasyYTDL Lite
 
+桌面與分享選單上顯示的名稱是「**YT下載Lite**」(專案、套件名與儲存資料夾仍叫 EasyYTDL-Lite)。
+
 > ⚠️ **僅供個人使用。從 YouTube 下載可能違反其服務條款,風險自負。**
 
 Android App:搜尋 YouTube 影片,或貼上影片、播放清單、頻道網址,下載成 MP3 或 MP4 存在手機裡,給其他播放器 App 播放。
@@ -11,7 +13,7 @@ Android App:搜尋 YouTube 影片,或貼上影片、播放清單、頻道網址,
 
 - **搜尋**:輸入關鍵字,列出 20 支影片,勾選後加入佇列。
 - **網址**:貼上影片、播放清單或頻道網址,列出影片(頻道列最近 30 支)勾選下載;單支影片自動勾選。
-- **分享**:在 YouTube App 對影片、播放清單或頻道按「分享」→ EasyYTDL Lite,會開到「網址」分頁列出(單支影片自動勾選);在標題列選好 MP3 或 MP4 後按「加入佇列」。
+- **分享**:在 YouTube App 對影片、播放清單或頻道按「分享」→ YT下載Lite,會開到「網址」分頁列出(單支影片自動勾選);在標題列選好 MP3 或 MP4 後按「加入佇列」。
 - **MP3**:192 kbps,依 ReplayGain 正規化到設定的目標音量(預設 89 dB),存到 `Music/EasyYTDL-Lite/YYYYMMDD/`,檔名是 `nn_標題.mp3`(`nn` 是當天的序號)。
 - **MP4**:解析度上限 1080p / 720p / 480p / 360p,合併影音軌但不重新編碼,存到 `Movies/EasyYTDL-Lite/YYYYMMDD_MP4/`。
 - **佇列**:背景下載,同時 1–3 支(預設 2);格式與解析度在標題列的「MP3 ⚙」切換。
@@ -38,7 +40,7 @@ Android App:搜尋 YouTube 影片,或貼上影片、播放清單、頻道網址,
 
 **更新**:App 每天會自動檢查一次新版,有新版時主畫面上方會出現「有新版 X.Y.Z」,點「前往下載」照上面的步驟安裝,會直接覆蓋舊版、保留設定與下載紀錄。也可以到「設定」→「檢查新版」手動檢查。
 
-可以和 EasyYTDL 裝在同一支手機:兩者是不同的 App,檔案存在不同資料夾。
+可以和 EasyYTDL(桌面名稱「YT下載」)裝在同一支手機:兩者是不同的 App,檔案存在不同資料夾。
 
 ## 建置與測試
 
@@ -46,7 +48,7 @@ Android App:搜尋 YouTube 影片,或貼上影片、播放清單、頻道網址,
 
 ```bash
 ./gradlew :app:testDebugUnitTest   # JVM 單元測試
-./gradlew :app:assembleDebug       # debug 版:套件名 com.jmh273.easyytdllite.debug,名稱「EasyYTDL Lite(測試)」
+./gradlew :app:assembleDebug       # debug 版:套件名 com.jmh273.easyytdllite.debug,名稱「YT下載Lite(測試)」
 sh ../scripts/check-no-google-auth.sh app/build.gradle app/build/outputs/apk/debug/app-debug.apk   # 不得含 Google 授權函式庫
 ```
 
