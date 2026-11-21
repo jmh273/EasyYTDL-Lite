@@ -34,11 +34,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.jmh273.easyytdllite.R
 import com.jmh273.easyytdllite.queue.MediaKind
 import com.jmh273.easyytdllite.queue.QueueItem
 import com.jmh273.easyytdllite.service.DownloadService
 import com.jmh273.easyytdllite.service.QueueStore
+import com.jmh273.easyytdllite.service.UpdateChecker
 import com.jmh273.easyytdllite.settings.SettingsStore
 import com.jmh273.easyytdllite.share.VideoUrl
 import com.jmh273.easyytdllite.youtube.ListSource
@@ -76,6 +79,7 @@ class MainActivity : ComponentActivity() {
                         nav = nav,
                         onNav = { nav = it },
                         search = { SearchTab(lists, onEnqueue = ::enqueueVideos) },
+                        banner = { UpdateBanner(versionName) },
                         url = { UrlTab(lists, onAddVideo = ::enqueue, onUnsupported = { toast(R.string.list_unsupported_url) }, onEnqueue = ::enqueueVideos) },
                         queue = { QueueTab() },
                         settings = { SettingsScreen(versionName = versionName, onOpenProbe = probe?.let { { startActivity(it) } }) },
@@ -99,6 +103,8 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         // 上一個 process 留下的等待中項目:App 一開就繼續處理。
         if (store.state.value.next() != null) DownloadService.start(this)
+        // 檢查新版(spec app-update):一天最多一次,失敗不出聲。
+        lifecycleScope.launch { UpdateChecker.get(this@MainActivity).autoCheck() }
     }
 
     /** 勾選的影片:依順序加入佇列(已在佇列的略過),標題先填上清單給的。回傳加入的支數。 */
@@ -201,6 +207,7 @@ private fun AppShell(
     nav: NavState,
     onNav: (NavState) -> Unit,
     search: @Composable () -> Unit,
+    banner: @Composable () -> Unit,
     url: @Composable () -> Unit,
     queue: @Composable () -> Unit,
     settings: @Composable () -> Unit,
@@ -245,6 +252,7 @@ private fun AppShell(
                         Tab(selected = nav.tab == t, onClick = { onNav(nav.select(t)) }, text = { Text(stringResource(tabTitle(t))) })
                     }
                 }
+                banner()
                 when (nav.tab) {
                     Tab.SEARCH -> search()
                     Tab.URL -> url()

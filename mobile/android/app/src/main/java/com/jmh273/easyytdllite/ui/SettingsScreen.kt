@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,12 +30,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jmh273.easyytdllite.R
 import com.jmh273.easyytdllite.service.AppNotice
+import com.jmh273.easyytdllite.service.UpdateChecker
+import com.jmh273.easyytdllite.update.ManualResult
+import com.jmh273.easyytdllite.update.UpdateCheck
 import com.jmh273.easyytdllite.settings.DownloadSettings
 import com.jmh273.easyytdllite.settings.SettingsStore
 import kotlinx.coroutines.launch
 
 /**
- * 設定頁(薄殼,spec app-settings):yt-dlp、下載、關於。yt-dlp 的操作在 [YtDlpActions]。
+ * 設定頁(薄殼,spec app-settings):yt-dlp、下載、關於(含檢查新版與開放原始碼授權)。yt-dlp 的操作在 [YtDlpActions]。
  */
 @Composable
 fun SettingsScreen(versionName: String, onOpenProbe: (() -> Unit)?) {
@@ -121,8 +125,41 @@ fun SettingsScreen(versionName: String, onOpenProbe: (() -> Unit)?) {
         Text(stringResource(R.string.settings_about), style = MaterialTheme.typography.titleMedium)
         Text(stringResource(R.string.main_version, versionName), style = MaterialTheme.typography.bodySmall)
         Text(stringResource(R.string.main_disclaimer), style = MaterialTheme.typography.bodySmall)
+        UpdateCheckRow(versionName)
+        var licensesOpen by remember { mutableStateOf(false) }
+        OutlinedButton(onClick = { licensesOpen = true }) { Text(stringResource(R.string.licenses_open)) }
+        if (licensesOpen) LicensesDialog { licensesOpen = false }
         if (onOpenProbe != null) {
             OutlinedButton(onClick = onOpenProbe) { Text(stringResource(R.string.main_open_probe)) }
+        }
+    }
+}
+
+/** 手動「檢查新版」與結果(spec app-update「手動檢查新版」)。 */
+@Composable
+private fun UpdateCheckRow(versionName: String) {
+    val context = LocalContext.current
+    val checker = remember { UpdateChecker.get(context) }
+    val scope = rememberCoroutineScope()
+    var checking by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<ManualResult?>(null) }
+    OutlinedButton(
+        onClick = {
+            checking = true
+            scope.launch {
+                result = UpdateCheck.manual(versionName, checker.checkNow())
+                checking = false
+            }
+        },
+        enabled = !checking,
+    ) { Text(stringResource(if (checking) R.string.update_checking else R.string.update_check)) }
+    when (val r = result) {
+        null -> {}
+        ManualResult.UpToDate -> Text(stringResource(R.string.update_up_to_date), style = MaterialTheme.typography.bodyMedium)
+        ManualResult.Failed -> Text(stringResource(R.string.update_failed), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+        is ManualResult.NewVersion -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.update_available, r.release.version.toString()), style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = { openReleasePage(context, r.release.url) }) { Text(stringResource(R.string.update_open)) }
         }
     }
 }

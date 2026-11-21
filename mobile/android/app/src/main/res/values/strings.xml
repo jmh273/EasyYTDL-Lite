@@ -96,4 +96,19 @@
     <string name="settings_about">關於</string>
     <string name="settings_waiting_downloads">等待下載結束後更新…</string>
 
+    <!-- 檢查新版(spec app-update) -->
+    <string name="update_available">有新版 %1$s</string>
+    <string name="update_open">前往下載</string>
+    <string name="update_skip">略過</string>
+    <string name="update_check">檢查新版</string>
+    <string name="update_checking">檢查中…</string>
+    <string name="update_up_to_date">已是最新版</string>
+    <string name="update_failed">檢查失敗,請稍後再試</string>
+
+    <!-- 開放原始碼授權(spec app-settings) -->
+    <string name="licenses_open">開放原始碼授權</string>
+    <string name="licenses_title">開放原始碼授權</string>
+    <string name="licenses_app">本 App 以 %1$s 授權,原始碼:%2$s</string>
+    <string name="licenses_intro">本 App 包含以下元件:</string>
+    <string name="licenses_close">關閉</string>
 </resources>
