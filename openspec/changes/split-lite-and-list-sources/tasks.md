@@ -32,3 +32,4 @@
 - [x] 4.5 實機跑一次 `--flat-playlist -J`(頻道、播放清單、搜尋各一),把真實輸出存成 FlatListTest 的測試檔
 - [x] 4.7 實機發現搜尋結果含直播中的影片:FlatList 略過 `is_live`、`is_upcoming`;spec 加情境;JVM 測試以實機輸出驗證
 - [x] 4.6 使用者親手:`setup-signing.sh` 產生新簽章金鑰並設 GitHub secrets;建公開 repo、第一個 commit(作者信箱用 GitHub noreply)、push;推 `mobile-v0.1.0` tag(各步先確認)
+- [x] 4.8 mobile-v0.1.0 正式版全新安裝第一次呼叫 yt-dlp 閃退(R8 改名 commons-compress 的 zip 類別,`ExtraFieldUtils` 反射失敗):Release 改回草稿、tag 保留;`proguard-rules.pro` 保留 `org.apache.commons.compress.archivers.zip.**`;新守門 `mobile/scripts/check-r8-keeps.sh` 接進 CI(壞版 APK 紅、修正版綠);全新安裝實機冒煙(搜尋、下載 MP3)通過;發 0.1.1

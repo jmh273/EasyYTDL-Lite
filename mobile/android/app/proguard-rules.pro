@@ -12,3 +12,9 @@
 
 # Jackson 要讀泛型與註解。
 -keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod
+
+# youtubedl-android 解壓內建 Python 用 commons-compress 的 ZipFile;ExtraFieldUtils 以反射建立各種 ExtraField
+# (AsiExtraField 等)。R8 會把它們改成無法實例化,全新安裝第一次呼叫 yt-dlp 就閃退
+# (2026-11-22 mobile-v0.1.0 實機:ExceptionInInitializerError / "is not a concrete class")。
+# 已解壓過 Python 的舊安裝不會再走這條路,所以覆蓋安裝看不出來,要用全新安裝驗。
+-keep class org.apache.commons.compress.archivers.zip.** { *; }

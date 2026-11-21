@@ -52,6 +52,7 @@ EasyYTDL 當初於 2026-11-04 執行 `render_template.py --feature drive` 生成
 | 資源前綴 | 沿用(字串前綴規則見 `strings.xml` 開頭) | 拿掉 `subs_`、`account_`、`latest_`,加 `list_` |
 | 偏好與存檔檔名 | `queue.json`、`history.json`、`ytdlp_versions` 等 | 沿用同名:各自在自己的 App 私有目錄,不互相衝突 |
 | 圖示 | 靛藍 → 紫漸層 + 音符與下載箭頭 | 前景與 monochrome 沿用;背景改成青綠 → 藍綠漸層以便區分(🟡 暫定,待使用者確認方向) |
+| R8 keep 規則 | 只保留 `com.yausername.**`、Jackson | 另保留 `org.apache.commons.compress.archivers.zip.**`,並以 `check-r8-keeps.sh` 在 CI 驗 APK。mobile-v0.1.0 全新安裝即閃退;EasyYTDL 用同一份規則,全新安裝應該也會中(已解壓過 Python 的舊安裝不會),🟡 未在 EasyYTDL 實測 |
 | 帶走的領域程式 | — | 不帶 Google 授權、YouTube Data API、帳號、訂閱、最新影片、授權探測與它們的 7 支測試 |
 
 殘留舊名掃描:同一個掃描(`com.jmh273.easyytdl` 後面不接 `lite`、`EasyYTDL` 後面不接 `-Lite`/` Lite`)對 EasyYTDL 命中 248 處;對本專案只剩刻意保留的出處說明(註解與 openspec 文件裡的「沿用 EasyYTDL」)。

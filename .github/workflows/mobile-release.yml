@@ -210,6 +210,13 @@ jobs:
           sh mobile/scripts/check-no-google-auth.sh --self-test
           sh mobile/scripts/check-no-google-auth.sh mobile/android/app/build.gradle "mobile/android/app/build/outputs/apk/release/app-release-v${APP_VERSION}.apk"
 
+      - name: Verify R8 kept reflection-loaded classes
+        env:
+          APP_VERSION: ${{ steps.version_check.outputs.version }}
+        run: |
+          set -euo pipefail
+          sh mobile/scripts/check-r8-keeps.sh "mobile/android/app/build/outputs/apk/release/app-release-v${APP_VERSION}.apk"
+
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
