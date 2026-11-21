@@ -67,4 +67,11 @@ class ListSourceTest {
             ListSource.Channel("@x").options(),
         )
     }
+
+    @Test
+    fun `單支影片也可以列出 不展開清單`() {
+        val v = ListSource.SingleVideo("j8yO0LkqA7s")
+        assertEquals("https://www.youtube.com/watch?v=j8yO0LkqA7s", v.target())
+        assertEquals(listOf("--flat-playlist", "-J", "--no-playlist"), v.options())
+    }
 }

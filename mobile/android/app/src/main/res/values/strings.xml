@@ -9,9 +9,6 @@
     <string name="main_disclaimer">僅供個人使用。從 YouTube 下載可能違反其服務條款,風險自負。</string>
 
     <!-- 佇列畫面 -->
-    <string name="queue_added">已加入佇列</string>
-    <string name="queue_duplicate">已在佇列中</string>
-    <string name="queue_no_video">找不到 YouTube 影片網址</string>
     <string name="queue_retry">重試</string>
     <string name="queue_remove">移除</string>
     <string name="queue_show_log">錯誤紀錄</string>
@@ -80,7 +77,7 @@
     <string name="list_no_videos">沒有影片</string>
     <string name="list_failed_network">沒有網路</string>
     <string name="list_failed_rejected">YouTube 拒絕,到設定按「更新 yt-dlp」後再試</string>
-    <string name="list_failed_unavailable">找不到這個清單或頻道</string>
+    <string name="list_failed_unavailable">找不到這支影片、清單或頻道</string>
     <string name="list_failed_other">讀取失敗,請稍後再試</string>
 
     <string name="settings_ytdlp">yt-dlp</string>

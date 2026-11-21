@@ -51,7 +51,11 @@ class ListViewModel(app: Application) : AndroidViewModel(app) {
             if (gen != slot.generation) return@launch
             slot.loading = false
             when (r) {
-                is Lister.Result.Ok -> slot.page = r.page
+                is Lister.Result.Ok -> {
+                    slot.page = r.page
+                    // 單支影片自動勾選(share-video-to-url-tab design D2);已下載或已在佇列的,畫面上照規則不能加入。
+                    if (source is ListSource.SingleVideo) slot.selected = r.page.videos.mapTo(LinkedHashSet()) { it.id }
+                }
                 is Lister.Result.Failed -> slot.failure = r.failure
             }
         }

@@ -20,25 +20,35 @@ object FlatList {
         val root = listOfNotNull(stdout.trim(), lastLine).firstNotNullOfOrNull { text ->
             runCatching { JSONObject(text) }.getOrNull()
         } ?: return null
+        // 單支影片(share-video-to-url-tab design D1):沒有 entries,根物件本身就是影片;當成只有一支、標題留空的清單。
+        if (!root.has("entries") && root.optString("_type", "video") == "video" && VIDEO_ID.matches(root.optString("id"))) {
+            val v = toVideo(root)
+            return ListPage("", listOfNotNull(v))
+        }
         val entries = root.optJSONArray("entries")
         val seen = HashSet<String>()
         val videos = ArrayList<Video>()
         if (entries != null) {
             for (i in 0 until entries.length()) {
                 val e = entries.optJSONObject(i) ?: continue
-                val id = e.optString("id")
-                if (!VIDEO_ID.matches(id)) continue
                 val ieKey = e.optString("ie_key")
                 if (ieKey.isNotEmpty() && ieKey != "Youtube") continue
-                // 直播中與尚未開播的下載不會結束(搜尋結果裡常見),不列出;已結束的直播(was_live)照收。
-                if (e.optString("live_status") in NOT_DOWNLOADABLE) continue
-                if (!seen.add(id)) continue
-                val title = e.optString("title").takeIf { it.isNotBlank() && it != "null" } ?: id
-                val duration = if (e.isNull("duration")) null else e.optDouble("duration").takeIf { !it.isNaN() }?.toLong()
-                videos += Video(id, title, duration)
+                val v = toVideo(e) ?: continue
+                if (!seen.add(v.id)) continue
+                videos += v
             }
         }
         return ListPage(root.optString("title").takeUnless { root.isNull("title") }.orEmpty(), videos)
+    }
+
+    /** 一個影片物件;id 不是 11 字元,或直播中、尚未開播(下載不會結束;已結束的直播照收)時是 null。 */
+    private fun toVideo(e: JSONObject): Video? {
+        val id = e.optString("id")
+        if (!VIDEO_ID.matches(id)) return null
+        if (e.optString("live_status") in NOT_DOWNLOADABLE) return null
+        val title = e.optString("title").takeIf { it.isNotBlank() && it != "null" } ?: id
+        val duration = if (e.isNull("duration")) null else e.optDouble("duration").takeIf { !it.isNaN() }?.toLong()
+        return Video(id, title, duration)
     }
 
     /** 「3:35」「1:02:03」;沒有長度時是 null。 */

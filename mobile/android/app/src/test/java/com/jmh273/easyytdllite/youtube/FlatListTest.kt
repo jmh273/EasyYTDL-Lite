@@ -46,6 +46,25 @@ class FlatListTest {
     }
 
     @Test
+    fun `實機輸出 單支影片 只留基本欄位`() {
+        // 2026-11-22 測試機輸出;原檔 155 KB 含帶手機 IP 的下載網址,只留不含網址的純量欄位
+        assertEquals(
+            ListPage("", listOf(Video("dD33lDxL9K0", "Sourav Joshi drew sketches for \$5. Now he has 42 million subscribers", 441))),
+            FlatList.parse(real("singlevideo")),
+        )
+    }
+
+    @Test
+    fun `單支影片的回應是只有一支的清單 標題留空`() {
+        val json = """{"_type":"video","id":"dD33lDxL9K0","title":"一支影片","duration":441,"live_status":"not_live","formats":[]}"""
+        assertEquals(ListPage("", listOf(Video("dD33lDxL9K0", "一支影片", 441))), FlatList.parse(json))
+        val live = """{"_type":"video","id":"aaaaaaaaaaa","title":"直播","live_status":"is_live"}"""
+        assertEquals(ListPage("", emptyList()), FlatList.parse(live))
+        // 根物件不是影片(例如沒有 entries 的空清單)照舊
+        assertEquals(ListPage("空", emptyList()), FlatList.parse("""{"_type":"playlist","id":"PLx","title":"空"}"""))
+    }
+
+    @Test
     fun `直播中與尚未開播的略過,已結束的直播照收`() {
         val json = """{"title":"t","entries":[
             {"id":"aaaaaaaaaaa","title":"直播中","live_status":"is_live"},

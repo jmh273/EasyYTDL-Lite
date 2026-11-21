@@ -47,19 +47,18 @@ fun SearchTab(vm: ListViewModel, onEnqueue: (List<Video>) -> Int) {
 }
 
 /**
- * 「網址」分頁(spec video-listing「貼網址列出影片」):單支影片直接交給 [onAddVideo];
- * 播放清單與頻道列出影片;不認得的網址由 [onUnsupported] 提示,不發請求。
+ * 「網址」分頁(spec video-listing「貼網址列出影片」):單支影片、播放清單、頻道都列出,勾選後加入;
+ * 不認得的網址由 [onUnsupported] 提示,不發請求。
  */
 @Composable
-fun UrlTab(vm: ListViewModel, onAddVideo: (String) -> Boolean, onUnsupported: () -> Unit, onEnqueue: (List<Video>) -> Int) {
+fun UrlTab(vm: ListViewModel, onUnsupported: () -> Unit, onEnqueue: (List<Video>) -> Int) {
     val slot = vm.url
     val focus = LocalFocusManager.current
     fun submit() {
         if (slot.input.isBlank() || slot.loading) return
         focus.clearFocus()
         when (val source = ListSource.classify(slot.input)) {
-            is ListSource.SingleVideo -> if (onAddVideo(slot.input)) slot.input = ""
-            is ListSource.Playlist, is ListSource.Channel -> vm.load(slot, source)
+            is ListSource.SingleVideo, is ListSource.Playlist, is ListSource.Channel -> vm.load(slot, source)
             else -> onUnsupported()
         }
     }

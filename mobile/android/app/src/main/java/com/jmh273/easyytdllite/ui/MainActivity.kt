@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
                         onNav = { nav = it },
                         search = { SearchTab(lists, onEnqueue = ::enqueueVideos) },
                         banner = { UpdateBanner(versionName) },
-                        url = { UrlTab(lists, onAddVideo = ::enqueue, onUnsupported = { toast(R.string.list_unsupported_url) }, onEnqueue = ::enqueueVideos) },
+                        url = { UrlTab(lists, onUnsupported = { toast(R.string.list_unsupported_url) }, onEnqueue = ::enqueueVideos) },
                         queue = { QueueTab() },
                         settings = { SettingsScreen(versionName = versionName, onOpenProbe = probe?.let { { startActivity(it) } }) },
                     )
@@ -131,49 +131,24 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * 分享進來(spec video-listing「分享播放清單或頻道」):有影片 id 就直接加入佇列並切到「佇列」;
-     * 播放清單或頻道切到「網址」並開始列出。點下載通知切到「佇列」。
+     * 分享進來(spec video-listing「分享影片、播放清單或頻道」):一律切到「網址」分頁、填入文字並列出,
+     * 使用者選好格式再按「加入佇列」;不直接加入佇列。點下載通知切到「佇列」。
      */
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
         if (intent.action == Intent.ACTION_SEND) {
-            val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+            val text = intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty().trim()
             intent.action = null // 旋轉螢幕重建時不要再處理一次
+            nav = nav.onShareList()
+            lists.url.input = text
             when (val source = ListSource.classify(text)) {
-                is ListSource.Playlist, is ListSource.Channel -> {
-                    nav = nav.onShareList()
-                    lists.url.input = text.orEmpty().trim()
-                    lists.load(lists.url, source)
-                }
-                else -> {
-                    nav = nav.onShareVideo()
-                    enqueue(text)
-                }
+                is ListSource.SingleVideo, is ListSource.Playlist, is ListSource.Channel -> lists.load(lists.url, source)
+                else -> toast(R.string.list_unsupported_url)
             }
         } else if (intent.getBooleanExtra(EXTRA_OPEN_QUEUE, false)) {
             nav = nav.onShareVideo()
             intent.removeExtra(EXTRA_OPEN_QUEUE)
         }
-    }
-
-    /** 單支影片加入佇列;回傳是否加入成功,結果以 Toast 告知。 */
-    private fun enqueue(text: String?): Boolean {
-        val id = VideoUrl.videoId(text)
-        if (id == null) {
-            toast(R.string.queue_no_video)
-            return false
-        }
-        var added = false
-        val (kind, height) = choice()
-        store.update { q -> q.add(id, VideoUrl.canonical(id), System.currentTimeMillis(), kind, height).also { added = it.added }.queue }
-        if (!added) {
-            toast(R.string.queue_duplicate)
-            return false
-        }
-        toast(R.string.queue_added)
-        askNotificationPermission()
-        DownloadService.start(this)
-        return true
     }
 
     /** 目前選的格式與 MP4 解析度(add-mp4-download design D3);MP3 的解析度是 null。 */
