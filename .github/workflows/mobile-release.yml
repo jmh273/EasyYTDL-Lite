@@ -1,0 +1,248 @@
+# Android 發版:推送 tag 觸發,通過全部驗證閘門後建立 GitHub Release 並附上已驗證的 APK。
+# 手動觸發只能帶 dry_run=true:走完 keystore 驗證、建置、APK 驗證、上傳建置產物,但不建立 Release。
+#
+# 這份 workflow 的每一道閘門在「期望值未設定」時 MUST 失敗(空字串比對永遠通過,閘門就形同不存在)。
+# action 與 JDK 的釘選值是撰寫當時的觀察值,使用前自己查最新;
+# 很快就失敗時,先查是不是外部 action 的浮動版號被上游撤掉,再找自己的程式。
+name: Mobile Release
+
+on:
+  push:
+    tags:
+      - 'mobile-v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'dry run: build and verify only, never create a Release (manual runs MUST keep this true)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    # 只有建立 Release 需要寫入權限。
+    permissions:
+      contents: write
+    steps:
+      # 手動觸發不得發佈:發佈的唯一入口是推送的 tag,版號與 tag 的一致性才有比對的對象。
+      - name: Refuse a manual run that is not a dry run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true
+        run: |
+          echo "Manual runs can only be dry runs. Publish by pushing a tag (mobile-v<VERSION>)."
+          exit 1
+
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      # [KIT-DIFF] 純原生專案:不需要 Node(範本的 setup-node 步驟已移除)。
+
+      # 版號閘門刻意排在建置之前:不一致就沒必要先花時間建 Android。
+      # dry_run 沒有 tag 可比,版號取自 gradle.properties,略過一致性比對。
+      # [KIT-DIFF] 版號來源改為 mobile/android/gradle.properties 的 VERSION_NAME(範本是 package.json + node -p)。
+      - name: Verify tag matches mobile/android/gradle.properties
+        id: version_check
+        working-directory: ./mobile/android
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # 恰好一行 VERSION_NAME=;零行或多行都視為錯誤,不取第一行碰運氣。
+          COUNT=$(grep -c '^VERSION_NAME=' gradle.properties || true)
+          if [ "$COUNT" != "1" ]; then
+            echo "mobile/android/gradle.properties MUST contain exactly one VERSION_NAME= line (found $COUNT)."
+            exit 1
+          fi
+          APP_VERSION=$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2- | tr -d '[:space:]')
+          if ! echo "$APP_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "VERSION_NAME '$APP_VERSION' in mobile/android/gradle.properties is not MAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          if [ "$EVENT_NAME" = "push" ]; then
+            TAG_VERSION=${REF_NAME#mobile-v}
+            if [ "$APP_VERSION" != "$TAG_VERSION" ]; then
+              echo "Version mismatch: mobile/android/gradle.properties is $APP_VERSION, tag is $TAG_VERSION"
+              exit 1
+            fi
+          else
+            echo "dry run: tag comparison skipped, version taken from mobile/android/gradle.properties"
+          fi
+          # 與 mobile/android/app/build.gradle 相同的推導公式,供建置後比對 APK 內的 versionCode。
+          # 10# 前綴避免 08 之類被當成八進位。
+          MAJOR=$(echo "$APP_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$APP_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$APP_VERSION" | cut -d. -f3)
+          if [ "$((10#$MINOR))" -ge 100 ] || [ "$((10#$PATCH))" -ge 100 ]; then
+            echo "MINOR and PATCH must stay below the carry limit, otherwise versionCode stops being monotonic."
+            exit 1
+          fi
+          EXPECTED_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
+          echo "version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$EXPECTED_CODE" >> "$GITHUB_OUTPUT"
+          echo "Using version $APP_VERSION (expected versionCode $EXPECTED_CODE)"
+
+      # CI 與本機同一個 major 版本,否則簽章相容性以外的建置差異很難診斷。
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # MUST 明列 packages,MUST NOT 吃這個 action 的預設值:預設含早已廢止的套件,
+      # 這個 action 抓到新版 cmdline-tools 時 sdkmanager 會直接失敗。
+      # 這是外部漂移,不是 repo 改壞了:同一份 workflow 前一天還是綠的。
+      # build-tools 由 AGP 在建置時依 compileSdk 自行下載。
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      # [KIT-DIFF] 純原生專案:範本的 npm ci / npm run build / npx cap sync 步驟已移除。
+
+      # 解出來的路徑與建置步驟的 KEYSTORE_FILE MUST 是同一個絕對路徑:
+      # app/build.gradle 的 storeFile 以 file() 解析,相對路徑會相對 mobile/android/app/。
+      - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MOBILE_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "Secret MOBILE_KEYSTORE_BASE64 is not set."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "${{ github.workspace }}/mobile/android/release.keystore"
+          if [ ! -s "${{ github.workspace }}/mobile/android/release.keystore" ]; then
+            echo "Decoded keystore is empty; check MOBILE_KEYSTORE_BASE64."
+            exit 1
+          fi
+
+      # 這一步存在的理由:gradle 的簽章失敗訊息把 alias 遮成 ***、內層例外訊息是 null,
+      # 四種完全不同的根因(base64 內容壞掉 / store 密碼錯 / alias 錯 / key 密碼錯)長得一模一樣,
+      # 而且要等整個 Android 建置跑完才看得到。這裡逐項分辨,秒級失敗並指名是哪一項。
+      #
+      # MUST NOT 在本步驟加 set -x:密碼是以引數傳給 keytool 的。
+      - name: Verify decoded keystore and credentials
+        env:
+          EXPECTED_SHA256: ${{ vars.MOBILE_KEYSTORE_SHA256 }}
+          KEYSTORE_PASSWORD: ${{ secrets.MOBILE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.MOBILE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.MOBILE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KS="${{ github.workspace }}/mobile/android/release.keystore"
+
+          # (a) 內容:base64 還原出來的 keystore 是不是你本機那一把。
+          # 期望值未設定時必須失敗,否則空字串會讓比對永遠通過。
+          if [ -z "${EXPECTED_SHA256:-}" ]; then
+            echo "Repository variable MOBILE_KEYSTORE_SHA256 is not set."
+            exit 1
+          fi
+          ACTUAL_SHA256=$(sha256sum "$KS" | awk '{print $1}')
+          echo "decoded keystore: $(stat -c%s "$KS") bytes, sha256 $ACTUAL_SHA256"
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "Decoded keystore does not match MOBILE_KEYSTORE_SHA256."
+            echo "  expected: $EXPECTED_SHA256"
+            echo "  actual:   $ACTUAL_SHA256"
+            echo "-> MOBILE_KEYSTORE_BASE64 content is wrong (truncated, padded, or contains non-base64 characters)."
+            exit 1
+          fi
+
+          # (b) store 密碼:能不能打開這個 keystore。
+          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" > /tmp/ks-list.txt 2>&1; then
+            echo "Cannot open the keystore with MOBILE_KEYSTORE_PASSWORD."
+            # keytool 的訊息不含密碼,可安全輸出。
+            sed -n '1,5p' /tmp/ks-list.txt
+            exit 1
+          fi
+          echo "keystore opened; entries: $(grep -c 'PrivateKeyEntry' /tmp/ks-list.txt || true)"
+
+          # (c) alias:這個別名在 keystore 裡存不存在。
+          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+            echo "MOBILE_KEY_ALIAS does not exist in the keystore."
+            echo "Aliases present (masked if they match a secret):"
+            grep -i 'PrivateKeyEntry\|trustedCertEntry' /tmp/ks-list.txt || true
+            exit 1
+          fi
+
+          # (d) key 密碼:私鑰本身讀不讀得出來。-certreq 需要私鑰,是最貼近 gradle 實際行為的檢查。
+          if ! keytool -certreq -alias "$KEY_ALIAS" -keystore "$KS" \
+                 -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" > /dev/null 2>&1; then
+            echo "Cannot read the private key with MOBILE_KEY_PASSWORD."
+            echo "-> For PKCS12, the key password MUST equal the store password; set both secrets to the same value."
+            exit 1
+          fi
+          echo "keystore, alias and both passwords all verified."
+
+      - name: Build Android Release APK
+        working-directory: ./mobile/android
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/mobile/android/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.MOBILE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.MOBILE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.MOBILE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      # 驗證對象是 APK 檔本身,與本機執行的是同一支腳本(mobile/scripts/verify-apk.sh)。
+      # 它自己會找 build-tools(那個目錄不在 PATH 上,而且要等建置之後才存在),所以本步驟 MUST 排在建置之後。
+      # 腳本涵蓋:APK 內的 versionName / versionCode,以及簽章憑證的 SHA-256(不是公鑰的)。
+      # 指紋放 variable 而非 secret:放 secret 會在日誌裡被遮成 ***,比對失敗時看不到實際值。
+      - name: Verify APK version and signing certificate
+        env:
+          EXPECTED_VERSION: ${{ steps.version_check.outputs.version }}
+          EXPECTED_VERSION_CODE: ${{ steps.version_check.outputs.version_code }}
+          EXPECTED_FINGERPRINT: ${{ vars.MOBILE_KEYSTORE_FINGERPRINT }}
+        run: |
+          set -euo pipefail
+          sh mobile/scripts/verify-apk.sh "mobile/android/app/build/outputs/apk/release/app-release-v${EXPECTED_VERSION}.apk"
+
+      # Lite 版不得含 Google 授權函式庫(split-lite-and-list-sources design D7)。先跑自測(對照組),再掃 build.gradle 與 release APK 的 dex。
+      - name: Verify no Google auth library
+        env:
+          APP_VERSION: ${{ steps.version_check.outputs.version }}
+        run: |
+          set -euo pipefail
+          sh mobile/scripts/check-no-google-auth.sh --self-test
+          sh mobile/scripts/check-no-google-auth.sh mobile/android/app/build.gradle "mobile/android/app/build/outputs/apk/release/app-release-v${APP_VERSION}.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-apk-${{ steps.version_check.outputs.version }}
+          path: mobile/android/app/build/outputs/apk/release/app-release-v${{ steps.version_check.outputs.version }}.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      # R8 的 mapping:把閃退堆疊還原成原本的類別名稱(enable-r8-shrink D3)。只當建置產物,不放 Release。
+      - name: Upload R8 mapping
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-mapping-${{ steps.version_check.outputs.version }}
+          path: mobile/android/app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: error
+          # 正式版的 mapping 要留著還原閃退堆疊；dry_run 的只留 7 天
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 90 || 7 }}
+
+      # 這一步 MUST 排在所有驗證之後:沒驗過的 APK 不該出現在使用者的取用位置。
+      # --verify-tag:tag 不在遠端就中止,不會因為 tag 打錯而建出指向別處的 Release。
+      # 建立失敗讓整個發版失敗(set -e)。dry_run 時整步跳過,不建立任何 Release。
+      - name: Create GitHub Release with the verified APK
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/mobile-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ github.ref_name }}
+          APP_VERSION: ${{ steps.version_check.outputs.version }}
+        run: |
+          set -euo pipefail
+          APK_PATH="mobile/android/app/build/outputs/apk/release/app-release-v${APP_VERSION}.apk"
+          if [ ! -f "$APK_PATH" ]; then
+            echo "Expected APK file $APK_PATH not found; no Release was created."
+            exit 1
+          fi
+          gh release create "$TAG_NAME" "$APK_PATH" --verify-tag --title "$TAG_NAME" --generate-notes

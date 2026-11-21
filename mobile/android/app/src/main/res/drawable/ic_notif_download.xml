@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 通知列的單色小圖示(系統會著色):和啟動圖示同一個構圖,音符加向下箭頭。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M7,15.5A2.5,2.5 0,1 0,7 20.5A2.5,2.5 0,1 0,7 15.5ZM8.4,5H9.6V18H8.4ZM9.6,5L12.6,6.7V8.6L9.6,6.9Z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M16,5H18V11H20L17,14.5L14,11H16Z" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.4" android:strokeLineCap="round"
+        android:pathData="M14,17.5H20" />
+</vector>

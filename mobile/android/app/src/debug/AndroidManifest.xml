@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- debug 版限定:下載探測(openspec change add-download-spike)。release 版的 manifest 不含這段。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- 從 YouTube App 分享網址進來時只填入網址,不自動下載(請求額度有限)。 -->
+        <activity
+            android:name=".probe.ProbeActivity"
+            android:exported="true"
+            android:label="@string/probe_title">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

@@ -1,0 +1,12 @@
+# 與根目錄同一套規則再擋一次：kit 範本的 keystore 忽略規則只涵蓋 mobile/（TravelPOI 的教訓），這裡兩層都放
+*.jks
+*.keystore
+*.p12
+keystore.properties
+android/keystore.properties
+android/app/release/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/

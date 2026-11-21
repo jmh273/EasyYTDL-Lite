@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 命名規則:App 自己的字串 MUST 用專屬前綴(main_、nav_、settings_、tab_、queue_、list_、options_、format_、status_、failure_、ytdlp_、notif_、notice_)。
+         函式庫也有通用名稱並附各語系翻譯;撞名時只會蓋掉預設語系,繁中手機會顯示函式庫的翻譯。 -->
+    <string name="app_name">EasyYTDL Lite</string>
+    <string name="main_version">版本 %1$s</string>
+    <!-- 只在 debug 版顯示(release 版沒有下載探測畫面)。 -->
+    <string name="main_open_probe">下載探測(測試用)</string>
+    <string name="main_disclaimer">僅供個人使用。從 YouTube 下載可能違反其服務條款,風險自負。</string>
+
+    <!-- 佇列畫面 -->
+    <string name="queue_added">已加入佇列</string>
+    <string name="queue_duplicate">已在佇列中</string>
+    <string name="queue_no_video">找不到 YouTube 影片網址</string>
+    <string name="queue_retry">重試</string>
+    <string name="queue_remove">移除</string>
+    <string name="queue_show_log">錯誤紀錄</string>
+    <string name="queue_clear_done">清除已完成</string>
+    <string name="queue_log_title">錯誤紀錄</string>
+    <string name="queue_log_empty">沒有紀錄</string>
+    <string name="queue_close">關閉</string>
+    <string name="queue_no_notification">沒有通知權限,無法在通知列看到進度;下載照常進行。</string>
+    <string name="queue_save_folder">存放位置:MP3 在 Music/EasyYTDL-Lite/YYYYMMDD/,MP4 在 Movies/EasyYTDL-Lite/YYYYMMDD_MP4/(每天一個資料夾,檔名前面加當天的序號)</string>
+    <string name="format_height">%1$dp</string>
+
+    <string name="status_waiting">等待中</string>
+    <string name="status_running">處理中</string>
+    <string name="status_waiting_network">等待網路</string>
+    <string name="status_done">完成</string>
+    <string name="status_failed">失敗</string>
+
+    <string name="failure_network">失敗:網路</string>
+    <string name="failure_youtube_rejected">失敗:YouTube 拒絕</string>
+    <string name="failure_bot_check">失敗:YouTube 要求登入確認不是機器人</string>
+    <string name="failure_unavailable">失敗:影片無法取得</string>
+    <string name="failure_other">失敗:其他錯誤</string>
+
+    <!-- yt-dlp 版本 -->
+    <string name="ytdlp_version">yt-dlp %1$s</string>
+    <string name="ytdlp_version_unknown">讀取中…</string>
+    <string name="ytdlp_update">更新 yt-dlp</string>
+    <string name="ytdlp_revert">退回上一版(%1$s)</string>
+    <string name="ytdlp_updating">正在更新 yt-dlp…</string>
+    <string name="ytdlp_updated">yt-dlp 已更新:%1$s → %2$s</string>
+    <string name="ytdlp_already_latest">yt-dlp 已是最新版本:%1$s</string>
+    <string name="ytdlp_restored">yt-dlp 更新失敗,已還原為 %1$s</string>
+    <string name="ytdlp_update_failed">yt-dlp 更新失敗:%1$s</string>
+    <string name="ytdlp_reverted">已退回 yt-dlp %1$s</string>
+    <string name="ytdlp_suggest">有影片因 YouTube 拒絕而失敗,可能是 YouTube 改版。目前是 yt-dlp %1$s,更新後會自動重試這些影片。</string>
+
+    <!-- 通知 -->
+    <string name="notif_channel">下載進度</string>
+    <string name="notif_preparing">準備下載…</string>
+    <string name="notif_updating_ytdlp">正在更新 yt-dlp…</string>
+    <string name="notif_waiting_network">等待網路恢復…</string>
+    <string name="notif_parallel_title">下載中 %1$d 支 · 已完成 %2$d / 共 %3$d</string>
+
+    <string name="notice_system_paused">系統暫停了下載(背景時間用完),請稍後重新開啟 App 繼續。</string>
+
+    <!-- 分頁與標題列(split-lite-and-list-sources) -->
+    <string name="tab_search">搜尋</string>
+    <string name="tab_url">網址</string>
+    <string name="tab_queue">佇列</string>
+    <string name="nav_settings">設定</string>
+    <string name="nav_back">返回</string>
+    <string name="options_label">下載選項</string>
+    <string name="options_format">下載格式</string>
+
+    <!-- 搜尋與網址清單(spec video-listing) -->
+    <string name="list_search_label">關鍵字</string>
+    <string name="list_search">搜尋</string>
+    <string name="list_url_label">YouTube 網址(影片、播放清單、頻道)</string>
+    <string name="list_url_go">列出</string>
+    <string name="list_unsupported_url">不是可列出的 YouTube 網址</string>
+    <string name="list_select_all">全選</string>
+    <string name="list_add_selected">加入佇列(%1$d)</string>
+    <string name="list_added">已加入 %1$d 支</string>
+    <string name="list_in_queue">已在佇列</string>
+    <string name="list_downloaded">已下載</string>
+    <string name="list_no_videos">沒有影片</string>
+    <string name="list_failed_network">沒有網路</string>
+    <string name="list_failed_rejected">YouTube 拒絕,到設定按「更新 yt-dlp」後再試</string>
+    <string name="list_failed_unavailable">找不到這個清單或頻道</string>
+    <string name="list_failed_other">讀取失敗,請稍後再試</string>
+
+    <string name="settings_ytdlp">yt-dlp</string>
+    <string name="settings_download">下載</string>
+    <string name="settings_concurrency">同時下載支數</string>
+    <string name="settings_concurrency_n">%1$d 支</string>
+    <string name="settings_concurrency_hint">同時下載越多,整批可能越快,但也比較耗電、耗記憶體,比較容易被 YouTube 擋。改了之後從下一支開始生效。</string>
+    <string name="settings_target_db">目標音量</string>
+    <string name="settings_target_db_value">%1$d dB</string>
+    <string name="settings_target_db_down">−</string>
+    <string name="settings_target_db_up">+</string>
+    <string name="settings_target_db_hint">範圍 %1$d–%2$d dB,預設 %3$d dB(和 Windows 版相同)。調高時可能受峰值限制,聽起來不一定變大聲。改了之後從下一支開始生效,已下載的檔案不會重做。</string>
+    <string name="settings_about">關於</string>
+    <string name="settings_waiting_downloads">等待下載結束後更新…</string>
+
+</resources>

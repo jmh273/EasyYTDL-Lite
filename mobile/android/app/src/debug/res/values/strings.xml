@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- debug 版限定的下載探測畫面。資源名一律 probe_ 前綴。 -->
+    <string name="probe_title">下載探測</string>
+    <string name="probe_url_label">YouTube 影片網址</string>
+    <string name="probe_mode_quickjs">QuickJS</string>
+    <string name="probe_mode_control">對照組(停用 JS 執行環境)</string>
+    <string name="probe_download">下載並轉成 MP3</string>
+    <string name="probe_download_confirm_title">要對 YouTube 發出一次請求嗎?</string>
+    <string name="probe_download_confirm_body">這次 spike 總共只用 3 支影片,同一支不重複請求。\n模式:%1$s\n%2$s</string>
+    <string name="probe_confirm">開始</string>
+    <string name="probe_cancel">取消</string>
+    <string name="probe_check_ffmpeg">檢查 ffmpeg</string>
+    <string name="probe_read_version">讀取 yt-dlp 版本</string>
+    <string name="probe_update">更新到 stable</string>
+    <string name="probe_revert">退回內建版本</string>
+    <string name="probe_running">執行中…</string>
+    <string name="probe_ytdlp_version">yt-dlp 版本:%1$s</string>
+    <string name="probe_init_failed">初始化失敗:%1$s</string>
+    <string name="probe_exit">退出碼:%1$s</string>
+    <string name="probe_exit_unknown">非 0(函式庫丟出例外,實際退出碼未知)</string>
+    <string name="probe_log_dir">紀錄:%1$s</string>
+    <string name="probe_saved_to">已存到:%1$s</string>
+    <string name="probe_no_mp3">沒有產生 MP3</string>
+    <string name="probe_replaygain_yes">replaygain:有</string>
+    <string name="probe_replaygain_no">replaygain:沒有</string>
+    <string name="probe_update_failed">失敗:%1$s</string>
+    <string name="probe_update_result">更新前:%1$s\n結果:%2$s\n更新後:%3$s</string>
+    <string name="probe_revert_result">退回前:%1$s\n退回後:%2$s</string>
+    <string name="probe_error">錯誤:%1$s</string>
+
+    <string name="probe_subs_result">訂閱 %1$d 個頻道,讀了 %2$d 頁(%2$d units)。前 10 個:</string>
+    <string name="probe_subs_first">請先按「讀訂閱」</string>
+    <string name="probe_no_uploads">「%1$s」沒有可用的上傳清單</string>
+    <string name="probe_videos_result">「%1$s」最近 %2$d 支影片(1 unit):</string>
+    <string name="probe_api_failed">API 失敗:%1$s(HTTP %2$d)</string>
+</resources>

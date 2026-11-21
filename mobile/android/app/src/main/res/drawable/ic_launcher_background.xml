@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 啟動圖示背景:青綠 → 藍綠斜向漸層(Lite 版暫定;和 EasyYTDL 的靛藍紫區分,待使用者確認方向)。刻意不用 YouTube 的紅色與播放鍵。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear"
+                android:startX="0" android:startY="0" android:endX="108" android:endY="108">
+                <item android:offset="0" android:color="#FF0F766E" />
+                <item android:offset="1" android:color="#FF0891B2" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

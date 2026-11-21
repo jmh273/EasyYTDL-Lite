@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 13 主題圖示用的單色圖層(與前景同形):左邊音符(MP3)、右邊向下箭頭落在底線上(下載)。內容在 66dp 安全區(21–87)內。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FF000000" android:pathData="M42,59A9,9 0,1 0,42 77A9,9 0,1 0,42 59ZM47,32H51V68H47ZM51,32L62,38V45L51,39Z" />
+    <path android:fillColor="#FF000000" android:pathData="M66,34H72V52H78L69,63L60,52H66Z" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M60,70H78" />
+</vector>

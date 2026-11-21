@@ -1,0 +1,167 @@
+// [KIT-DIFF] 純原生:以 plugins {} 套用 AGP、Kotlin、Compose 編譯器(版本在 root build.gradle)。
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+// [KIT-DIFF] 版號的單一來源是 mobile/android/gradle.properties 的 VERSION_NAME(範本是 package.json)。
+def appVersion = project.findProperty('VERSION_NAME')
+
+// 版號格式檢查:判準與 .github/workflows/mobile-release.yml 的版號步驟相同(完整比對三段 ASCII 數字、不 trim),兩處 MUST 一起改。
+// 沒有這道檢查時,abc 只丟看不出來源的 NumberFormatException,0.1 則被靜默當成 0.1.0。
+def appVersionText = appVersion == null ? '' : appVersion.toString()
+if (!(appVersionText ==~ /[0-9]+\.[0-9]+\.[0-9]+/)) {
+    throw new GradleException("VERSION_NAME in mobile/android/gradle.properties must be MAJOR.MINOR.PATCH (digits only). Current version: '${appVersionText}'")
+}
+
+def versionParts = appVersion.split('\\.')
+def major = versionParts.length > 0 ? versionParts[0].toInteger() : 0
+def minor = versionParts.length > 1 ? versionParts[1].toInteger() : 0
+def patch = versionParts.length > 2 ? versionParts[2].toInteger() : 0
+
+// versionCode = major * 10000 + minor * 100 + patch。minor / patch 不得進位,否則 versionCode 不再單調。
+// 同一個公式也在 .github/workflows/mobile-release.yml 的版號步驟,兩處 MUST 一起改。
+if (minor >= 100 || patch >= 100) {
+    throw new GradleException("Minor and patch versions must be less than 100 to ensure monotonic versionCode. Current version: ${appVersion}")
+}
+
+def computedVersionCode = major * 10000 + minor * 100 + patch
+
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+// release 任務在簽章設定缺項時 MUST 失敗並指名缺哪一項:
+// 缺項時 signingConfigs.release 會被整段跳過,產物會是未簽章或退回其他金鑰的 APK。
+gradle.taskGraph.whenReady { taskGraph ->
+    def isReleaseTask = taskGraph.allTasks.any { it.name.toLowerCase().contains("release") }
+    if (isReleaseTask) {
+        def missing = []
+        if (!System.getenv("KEYSTORE_FILE") && !keystoreProperties['storeFile']) missing << "KEYSTORE_FILE/storeFile"
+        if (!System.getenv("KEYSTORE_PASSWORD") && !keystoreProperties['storePassword']) missing << "KEYSTORE_PASSWORD/storePassword"
+        if (!System.getenv("KEY_ALIAS") && !keystoreProperties['keyAlias']) missing << "KEY_ALIAS/keyAlias"
+        if (!System.getenv("KEY_PASSWORD") && !keystoreProperties['keyPassword']) missing << "KEY_PASSWORD/keyPassword"
+
+        if (!missing.isEmpty()) {
+            throw new GradleException("Release build missing signing configurations: ${missing.join(', ')}")
+        }
+    }
+}
+
+android {
+    namespace = "com.jmh273.easyytdllite"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        // applicationId 發佈後 MUST NOT 改。
+        applicationId "com.jmh273.easyytdllite"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode computedVersionCode
+        versionName appVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // youtubedl-android 附的 python、ffmpeg、quickjs 是原生執行檔;測試機與日常手機都是 arm64。
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+    // youtubedl-android 直接執行 nativeLibraryDir 裡的 lib*.so,原生函式庫必須解壓安裝
+    // (搭配 manifest 的 extractNativeLibs="true")。
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+    // [KIT-DIFF] 拿掉 web 資產用的 aaptOptions;加上 Compose。
+    buildFeatures {
+        compose true
+    }
+    // 環境變數優先於 keystore.properties:CI 用環境變數,本機用檔案。
+    // storeFile 以 file() 解析,相對路徑會相對 mobile/android/app/ 而不是 mobile/android/,
+    // 所以 MUST 用絕對路徑。
+    signingConfigs {
+        release {
+            def storeFilePath = System.getenv("KEYSTORE_FILE") ?: keystoreProperties['storeFile']
+            def storePasswordValue = System.getenv("KEYSTORE_PASSWORD") ?: keystoreProperties['storePassword']
+            def keyAliasValue = System.getenv("KEY_ALIAS") ?: keystoreProperties['keyAlias']
+            def keyPasswordValue = System.getenv("KEY_PASSWORD") ?: keystoreProperties['keyPassword']
+
+            if (storeFilePath && storePasswordValue && keyAliasValue && keyPasswordValue) {
+                storeFile file(storeFilePath)
+                storePassword storePasswordValue
+                keyAlias keyAliasValue
+                keyPassword keyPasswordValue
+            }
+        }
+    }
+
+    // 釘死原始碼編碼:javac 未指定時取平台預設,中文 Windows 上不是 UTF-8,
+    // 原始碼註解含中文時會亂碼甚至編譯失敗。症狀出現在別人的機器或 CI 上,本機不一定看得到。
+    compileOptions {
+        encoding = "UTF-8"
+        // [KIT-DIFF] Java 與 Kotlin 的 JVM 目標一致(下方 kotlin { })。
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildTypes {
+        debug {
+            // debug 版 MUST 在桌面與手機上一眼分得出來:applicationId 後綴讓兩者並存,
+            // 但名稱與版號若都一樣,拿到測試版的人會開錯 app,看到沒有新功能的正式版,
+            // 那與「功能沒做出來」完全同形。
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            resValue "string", "app_name", "EasyYTDL Lite(測試)"
+        }
+        release {
+            // R8(enable-r8-shrink):dex 25.4 → 約 11 MB。keep 規則見 proguard-rules.pro。
+            // debug 不開:建置較快;R8 的效果只在 release APK 上驗證。
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    // APK 檔名含版號:驗證腳本與 workflow 都以這個檔名找產物。
+    applicationVariants.all { variant ->
+        if (variant.buildType.name == "release") {
+            variant.outputs.all {
+                outputFileName = "app-release-v${appVersion}.apk"
+            }
+        }
+    }
+}
+
+// [KIT-DIFF] Kotlin 的 JVM 目標要和 compileOptions 一致。
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
+// [KIT-DIFF] 拿掉 Capacitor 相依、flatDir、capacitor.build.gradle、google-services;換成 Compose。
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2026.06.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    implementation 'androidx.activity:activity-compose:1.12.4'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.9.4'
+
+    // 縮圖與頻道頭像(add-video-thumbnails design D5)。3.4.0 起需要 Kotlin 標準函式庫 2.3+,和 Kotlin 2.2.20 編譯器不相容;升 Kotlin 時再一起升。
+    implementation 'io.coil-kt.coil3:coil-compose:3.3.0'
+    implementation 'io.coil-kt.coil3:coil-network-okhttp:3.3.0'
+
+    // yt-dlp + python + QuickJS(library)與 ffmpeg。0.18.1 是 pre-release;版本固定,不用動態版本。
+    implementation 'io.github.junkfood02.youtubedl-android:library:0.18.1'
+    implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1'
+
+    implementation 'androidx.core:core-ktx:1.17.0'
+
+    testImplementation 'junit:junit:4.13.2'
+    // Android 的 org.json 在 JVM 單元測試裡是空殼;測試改用真的實作。
+    testImplementation 'org.json:json:20260814'
+}

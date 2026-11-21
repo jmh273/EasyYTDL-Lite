@@ -1,0 +1,27 @@
+# 簽章金鑰與密碼：絕不進版控（根目錄也要擋，不只 mobile/）
+*.jks
+*.keystore
+*.p12
+*.pem
+keystore.properties
+*.base64
+
+# 建置產物與本機設定
+build/
+.gradle/
+local.properties
+*.apk
+*.aab
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Claude Code 本機設定
+.claude/settings.local.json
+
+# 本機 IDE 設定（含本機 JDK 路徑）
+.vscode/
+__pycache__/
